@@ -1,0 +1,16 @@
+package app.argusos.patches.amazon
+
+import app.revanced.patcher.patch.bytecodePatch
+import app.argusos.util.returnEarly
+
+@Suppress("unused")
+val alwaysAllowDeepLinkingPatch = bytecodePatch(
+    name = "Always allow deep-linking",
+    description = "Open Amazon links, even if the app is not set to handle Amazon links.",
+) {
+    compatibleWith("com.amazon.mShop.android.shopping")
+
+    apply {
+        deepLinkingMethod.returnEarly(true)
+    }
+}

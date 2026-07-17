@@ -1,0 +1,5 @@
+The ArgusOS branding found in this software is copyrighted and not covered under the GPL.
+
+To use or distribute ArgusOS branding, you must obtain permission by contacting branding@argusos.app
+
+For more information see https://github.com/ArgusOS/argusos-branding

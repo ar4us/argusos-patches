@@ -1,0 +1,57 @@
+package app.argusos.patches.primevideo.video.speed
+
+import app.revanced.patcher.extensions.addInstructions
+import app.revanced.patcher.extensions.getInstruction
+import app.revanced.patcher.patch.bytecodePatch
+import app.argusos.patches.primevideo.misc.extension.sharedExtensionPatch
+import app.argusos.util.getReference
+import app.argusos.util.indexOfFirstInstructionOrThrow
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+
+private const val EXTENSION_CLASS_DESCRIPTOR =
+    "Lapp/argusos/extension/primevideo/videoplayer/PlaybackSpeedPatch;"
+
+@Suppress("unused")
+val playbackSpeedPatch = bytecodePatch(
+    name = "Playback speed",
+    description = "Adds playback speed controls to the video player.",
+) {
+    dependsOn(
+        sharedExtensionPatch,
+    )
+
+    compatibleWith(
+        "com.amazon.avod.thirdpartyclient"("3.0.412.2947"),
+    )
+
+    apply {
+        playbackUserControlsInitializeMethod.apply {
+            val getIndex = indexOfFirstInstructionOrThrow {
+                opcode == Opcode.IPUT_OBJECT &&
+                    getReference<FieldReference>()?.name == "mUserControls"
+            }
+
+            val getRegister = getInstruction<OneRegisterInstruction>(getIndex).registerA
+
+            addInstructions(
+                getIndex + 1,
+                """
+                invoke-static { v$getRegister }, $EXTENSION_CLASS_DESCRIPTOR->initializeSpeedOverlay(Landroid/view/View;)V
+                """,
+            )
+        }
+
+        playbackUserControlsPrepareForPlaybackMethod.apply {
+            addInstructions(
+                0,
+                """
+                invoke-virtual { p1 }, Lcom/amazon/avod/playbackclient/PlaybackContext;->getPlayer()Lcom/amazon/video/sdk/player/Player;
+                move-result-object v0
+                invoke-static { v0 }, $EXTENSION_CLASS_DESCRIPTOR->setPlayer(Lcom/amazon/video/sdk/player/Player;)V
+                """,
+            )
+        }
+    }
+}

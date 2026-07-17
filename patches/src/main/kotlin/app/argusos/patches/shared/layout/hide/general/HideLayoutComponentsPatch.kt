@@ -1,0 +1,55 @@
+package app.argusos.patches.shared.layout.hide.general
+
+import app.revanced.patcher.patch.BytecodePatchContext
+import app.revanced.patcher.patch.Patch
+import app.revanced.patcher.patch.bytecodePatch
+import app.argusos.patches.all.misc.resources.addResources
+import app.argusos.patches.all.misc.resources.addResourcesPatch
+import app.argusos.patches.shared.misc.litho.filter.addLithoFilter
+import app.argusos.patches.shared.misc.settings.preference.BasePreferenceScreen
+import app.argusos.patches.shared.misc.settings.preference.InputType
+import app.argusos.patches.shared.misc.settings.preference.PreferenceScreenPreference
+import app.argusos.patches.shared.misc.settings.preference.SwitchPreference
+import app.argusos.patches.shared.misc.settings.preference.TextPreference
+import kotlin.collections.toTypedArray
+
+internal fun hideLayoutComponentsPatch(
+    lithoFilterPatch: Patch,
+    settingsPatch: Patch,
+    generalSettingsScreen: BasePreferenceScreen.Screen,
+    additionalDependencies: Set<Patch> = emptySet(),
+    filterClasses: Set<String>,
+    vararg compatibleWithPackages: Pair<String, Set<String>?>,
+    executeBlock: BytecodePatchContext.() -> Unit = {},
+) = bytecodePatch(
+    name = "Hide layout components",
+    description = "Adds options to hide general layout components.",
+) {
+    dependsOn(
+        lithoFilterPatch,
+        settingsPatch,
+        *additionalDependencies.toTypedArray(),
+        addResourcesPatch,
+    )
+
+    compatibleWith(packages = compatibleWithPackages)
+
+    apply {
+        addResources("shared", "layout.hide.general.hideLayoutComponentsPatch")
+
+        generalSettingsScreen.addPreferences(
+            PreferenceScreenPreference(
+                key = "argusos_custom_filter_screen",
+                sorting = PreferenceScreenPreference.Sorting.UNSORTED,
+                preferences = setOf(
+                    SwitchPreference("argusos_custom_filter"),
+                    TextPreference("argusos_custom_filter_strings", inputType = InputType.TEXT_MULTI_LINE),
+                ),
+            ),
+        )
+
+        filterClasses.forEach { className -> addLithoFilter(className) }
+
+        executeBlock()
+    }
+}
